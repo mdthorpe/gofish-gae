@@ -19,6 +19,7 @@ class Player(db.Model):
   player_nick = db.StringProperty()
 
 class Game(db.Model):
-  players = db.ReferenceProperty(Player)
-  game_deck = db.ReferenceProperty(Deck)
+  human_player = db.StringProperty()
   in_progress = db.BooleanProperty()
+  num_ai_opponents = db.IntegerProperty()
+  #game_deck = db.ReferenceProperty(Deck)

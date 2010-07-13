@@ -1,14 +1,8 @@
-application: gofishgae
+application: gofish-gae
 version: 1
 runtime: python
 api_version: 1
 
 handlers:
 - url: /.*
-  script: main.py
-
-- url: /game/new
-  script: main.py
-
-- url: /game/\d+
   script: main.py
