@@ -13,6 +13,7 @@ app = webapp.WSGIApplication(
          ('/', views.GameMenu),
          ('/game/new', views.NewGame),
          ('/game/(\d+)', views.GameHandler),
+         ('/game/(\d+)/(.+)', views.GameHandler),
        ],
        debug=True)
 

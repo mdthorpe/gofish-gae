@@ -1,23 +1,24 @@
 import random
 
+from google.appengine.ext import db
+
 class Card(object):
-  card_number = IntegerProperty()
+  card_number = db.IntegerProperty()
 
   def __init__(self, card_number):
     self.card_number = card_number
 
 class Deck(db.Model):
-  cards = ListProperty(Card)
+  cards = db.ListProperty(int)
+  discards = db.ListProperty(int)
 
   def __init__(self):
-    for i in range(0,52): 
-      self.cards.append(Card(i))
-      #random.shuffle(self.cards)
-
+    self.cards = range(0,52) 
 
 class Player(db.Model):
-  player_nick = StringProperty()
+  player_nick = db.StringProperty()
 
-class GoFishGame(db.Model):
-  players = ListProperty(Player)
-  game_deck = ReferenceProperty(Deck)
+class Game(db.Model):
+  players = db.ReferenceProperty(Player)
+  game_deck = db.ReferenceProperty(Deck)
+  in_progress = db.BooleanProperty()
