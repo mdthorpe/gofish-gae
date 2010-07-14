@@ -9,17 +9,17 @@ class Card(object):
     self.card_number = card_number
 
 class Deck(db.Model):
-  cards = db.ListProperty(int)
-  discards = db.ListProperty(int)
-
-  def __init__(self):
-    self.cards = range(0,52) 
-
-class Player(db.Model):
-  player_nick = db.StringProperty()
+  cards = db.ListProperty(long)
+  discards = db.ListProperty(long)
 
 class Game(db.Model):
   human_player = db.StringProperty()
   in_progress = db.BooleanProperty()
   num_ai_opponents = db.IntegerProperty()
-  #game_deck = db.ReferenceProperty(Deck)
+  game_deck = db.ReferenceProperty(Deck)
+
+class AiPlayer(db.Model):
+  nickname = db.StringProperty()
+  game = db.ReferenceProperty(Game)
+  hand = db.ListProperty(long)
+
