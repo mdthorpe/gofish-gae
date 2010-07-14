@@ -1,0 +1,16 @@
+<h1>New Game</h1>
+Human Player: {{nickname}} <a href='/nickname/set'>Change Name</a>
+<h2>Settings</h2>
+<form action='/game/new' method='POST'>
+  <div>
+    <label for='num_ai_opponents'>Select number of AI opponents</label>
+    <select name='num_ai_opponents'>
+      <option>1</option>
+      <option>2</option>
+      <option>3</option>
+    </select>
+  </div>
+  <div>
+    <input type='submit' value='Start Game'/>
+  </div>
+</form>
