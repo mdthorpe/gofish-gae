@@ -11,10 +11,10 @@ Application controller
 app = webapp.WSGIApplication(
        [
          ('/', views.GameMenu),
-         ('/nickname/set', views.SetNickHandler),
-         ('/game/new', views.NewGameHandler),
-         ('/game/(\d+)', views.GameHandler),
-         ('/game/(\d+)/(.+)', views.GameHandler),
+         ('/nickname/set/', views.SetNickHandler),
+         ('/game/new/', views.NewGameHandler),
+         ('/game/(\d+)/', views.GameHandler),
+         ('/game/(\d+)/(.+)/', views.GameHandler),
        ],
        debug=True)
 

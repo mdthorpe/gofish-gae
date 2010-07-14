@@ -49,10 +49,13 @@ class NewGameHandler(webapp.RequestHandler):
 
       # Create new game
       game = Game(
-          human_player=nickname, 
-          num_ai_opponents=int(num_ai_opponents),
-          game_deck=deck
+          game_deck=deck,
+          in_progress=False,
       ).save()
+
+      # Add Player
+      human_player = Player(nickname=nickname, game=game)
+      human_player.save()
 
       # Add Opponents
       for ai_opponent in range(0,int(num_ai_opponents)):
@@ -61,9 +64,9 @@ class NewGameHandler(webapp.RequestHandler):
         ai_player.nickname = "AI_Player_"+str(ai_opponent+1)
         ai_player.save()
 
-      self.redirect('/game/' + str( game.id() ) + '/start' )
+      self.redirect('/game/' + str( game.id() ) + '/' )
     else:
-      self.redirect('/game/new')
+      self.redirect('/game/new/')
 
 
 class GameHandler(webapp.RequestHandler):
@@ -76,20 +79,28 @@ class GameHandler(webapp.RequestHandler):
     except:
       self.redirect('/')
 
-    if action == 'start':
-      game = Game.get_by_id(int(game_id))
-      game.in_progress = True
-      game.save()
-      self.redirect('/game/' + str(game_id) )
+    human_player = Player.all().filter('game =', game.key()).fetch(1)[0]
+    ai_players = AiPlayer.all().filter('game =', game.key()).fetch(10)
 
+    if action == "deal":
+      self.deal_cards(game)
+      self.redirect('/game/'+str(game_id)+'/')
+ 
+    
     path = os.path.join(os.path.dirname(__file__), 'views/play_game.html')
     self.response.out.write(
         template.render(path, {
           'game_id': game_id,
           'nickname': nickname,
+          'game_deck': game.game_deck.get_cards(),
           'game': game,
+          'human_player' : human_player,
+          'ai_players' : ai_players,
           })
         )
+
+  def deal_cards(self,game):
+    pass
 
 class GameMenu(webapp.RequestHandler):
 
@@ -100,5 +111,5 @@ class GameMenu(webapp.RequestHandler):
       path = os.path.join(os.path.dirname(__file__), 'views/main_menu.html')
       self.response.out.write(template.render(path, {'nickname': nickname}))
     else:
-      self.redirect('/nickname/set')
+      self.redirect('/nickname/set/')
           
