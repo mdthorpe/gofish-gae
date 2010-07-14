@@ -14,9 +14,6 @@ class SetNickHandler(webapp.RequestHandler):
     self.response.out.write(template.render(path, {}))
 
   def post(self):
-    self.response.out.write('<html><body>You wrote:<pre>')
-    self.response.out.write(cgi.escape(self.request.get('nickname')))
-    self.response.out.write('</pre></body></html>')
     nickname = cgi.escape(self.request.get('nickname'))
     self.response.headers.add_header('Set-Cookie','nickname='+nickname+'; expires:Tue, 19-Jan-2038 03:14:18 UTC; path=/;')
     self.redirect('/')
