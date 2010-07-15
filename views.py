@@ -106,6 +106,14 @@ class GameHandler(webapp.RequestHandler):
   def post(self, game_id, action=None):
     if action == "ask":
       # Do human player turn
+      ask_opponent = cgi.escape(self.request.get('ask_opponent'))
+      ask_value = cgi.escape(self.request.get('ask_value'))
+      game = Game.get_by_id(int(game_id))
+      human_player = Player.all().filter('game =', game.key()).fetch(1)[0]
+      ai_opponent = AiPlayer.get(ask_opponent)
+      logging.debug(human_player.hand)
+      logging.debug(ai_opponent.hand)
+      #player.
 
       # Do ai players turns
       self.redirect('/game/'+str(game_id)+'/')

@@ -29,7 +29,6 @@ class Hand(db.Model):
   def get_card_suit(self, card):
     suits = ["S","H","C","D"]
     index = card%4
-    logging.debug(index)
     return suits[index] 
 
 class Game(db.Model):
