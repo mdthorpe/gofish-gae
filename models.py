@@ -1,28 +1,60 @@
 import random
+import logging
 
 from google.appengine.ext import db
 
-class Deck(db.Model):
-  cards = db.ListProperty(long)
-  discards = db.ListProperty(long)
+class Hand(db.Model):
+  cards = db.ListProperty(int)
+  discards = db.ListProperty(int)
 
-  def get_cards(self):
+  def get_cards(self): 
     return self.cards
+
+  def set_cards(self,new_cards):
+    self.cards = new_cards
+    self.save()
+    return self.cards
+
+  def get_fancy_cards(self):
+    fancy_cards = []
+    for card in self.cards:
+      card_value = self.get_card_value(card)
+      card_suit = self.get_card_suit(card)
+      fancy_cards.append(card_value+card_suit)
+    return fancy_cards
+
+  def get_card_value(self, card):
+    return str((card/4)+1)
+
+  def get_card_suit(self, card):
+    suits = ["S","H","C","D"]
+    index = card%4
+    logging.debug(index)
+    return suits[index] 
 
 class Game(db.Model):
   in_progress = db.BooleanProperty()
-  game_deck = db.ReferenceProperty(Deck)
+  deck = db.ReferenceProperty(Hand)
+
 
 class Player(db.Model):
   nickname = db.StringProperty()
   game = db.ReferenceProperty(Game)
-  hand = db.ListProperty(long)
-
-  def get_cards(self):
-    return self.hand
+  hand = db.ReferenceProperty(Hand)
 
   def is_ai_player(self):
     return False
+
+  def take_cards(self, deck, num_cards):
+    deck_cards = deck.get_cards()
+    player_hand = self.hand.get_cards()
+
+    for num in range(0,num_cards):
+      player_hand.append(deck_cards.pop(-1))
+
+    deck.set_cards(deck_cards)
+    self.hand.set_cards(player_hand)
+
 
 class AiPlayer(Player):
   """

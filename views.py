@@ -38,20 +38,17 @@ class NewGameHandler(webapp.RequestHandler):
 
     if nickname and num_ai_opponents:
       # Create new game deck
-      deck = Deck()
+      deck = Hand()
       shuffled_cards = range(0,52)
       for x in range(0,5): random.shuffle(shuffled_cards)
       deck.cards = shuffled_cards
       deck.save()
 
       # Create new game
-      game = Game(
-          game_deck=deck,
-          in_progress=False,
-      ).save()
+      game = Game(deck=deck).save()
 
       # Add Player
-      human_player = Player(nickname=nickname, game=game)
+      human_player = Player(nickname=nickname, game=game, hand=Hand().save())
       human_player.save()
 
       # Add Opponents
@@ -59,6 +56,7 @@ class NewGameHandler(webapp.RequestHandler):
         ai_player = AiPlayer()
         ai_player.game = game
         ai_player.nickname = "AI_Player_"+str(ai_opponent+1)
+        ai_player.hand = Hand().save()
         ai_player.save()
 
       self.redirect('/game/' + str( game.id() ) + '/' )
@@ -75,29 +73,52 @@ class GameHandler(webapp.RequestHandler):
       game = Game.get_by_id(int(game_id))
     except:
       self.redirect('/')
+      return
 
-    human_player = Player.all().filter('game =', game.key()).fetch(1)[0]
-    ai_players = AiPlayer.all().filter('game =', game.key()).fetch(10)
+    if game is None: 
+      self.redirect('/')
+      return
+
+    try:
+      human_player = Player.all().filter('game =', game.key()).fetch(1)[0]
+      ai_players = AiPlayer.all().filter('game =', game.key()).fetch(10)
+    except AttributeError, why:
+      self.redirect('/')
+      return
 
     if action == "deal":
-      self.deal_cards(game)
+      self.deal_cards(game, [human_player])
+      self.deal_cards(game, ai_players)
       self.redirect('/game/'+str(game_id)+'/')
  
-    
     path = os.path.join(os.path.dirname(__file__), 'views/play_game.html')
     self.response.out.write(
         template.render(path, {
           'game_id': game_id,
           'nickname': nickname,
-          'game_deck': game.game_deck.get_cards(),
+          'deck':  game.deck.get_cards(),
           'game': game,
           'human_player' : human_player,
           'ai_players' : ai_players,
           })
         )
 
-  def deal_cards(self,game):
-    pass
+  def post(self, game_id, action=None):
+    if action == "ask":
+      # Do human player turn
+
+      # Do ai players turns
+      self.redirect('/game/'+str(game_id)+'/')
+      return
+    
+
+  def deal_cards(self,game,players):
+    for player in players:
+      player.take_cards(game.deck,7)
+    game.in_progress=True
+    game.save()
+
+
 
 class GameMenu(webapp.RequestHandler):
 

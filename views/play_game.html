@@ -1,18 +1,15 @@
 <div>
-  Deck: {{ game_deck }}
+  Deck: {{ game.deck.get_fancy_cards }} 
 </div>
 
 <div>
   Human Player: {{ human_player.nickname }}
 </div>
 <div>
-  Hand: {{ human_player.get_cards }}
-</div>
-
-<div>
   <ul>
+    <li>{{human_player.nickname}} Hand: {{ human_player.hand.get_fancy_cards }}</li>
   {% for ai_player in ai_players %}
-    <li>{{ ai_player.nickname }} Hand: {{ ai_player.get_cards }} </li>
+    <li>{{ ai_player.nickname }} Hand: {{ ai_player.hand.get_fancy_cards }} </li>
   {% endfor %}
   </ul>
 </div>
@@ -21,4 +18,32 @@
 <div>
   <a href="deal/">Deal Cards</a>
 </div>
+{% else %}
+<div>
+  <h2>Take Your Turn</h2>
+  <form action='ask/' method='POST'>
+    <label for='ask_opponent'>Ask </label>
+    <select name='ask_opponent'>
+      {% for ai_player in ai_players %}
+        <option value='{{ ai_player.key }}'>{{ ai_player.nickname }}</option>
+      {% endfor %}
+    </select>
+    <label for='ask_value'>for all their </label>
+    <select name='ask_value'>
+      <option>2</option>
+      <option>3</option>
+      <option>4</option>
+      <option>5</option>
+      <option>6</option>
+      <option>7</option>
+      <option>8</option>
+      <option>9</option>
+      <option>10</option>
+      <option value='11'>J</option>
+      <option value='12'>Q</option>
+      <option value='13'>K</option>
+      <option value='0'>A</option>
+    </select>'s
+    <input type='submit' value="Go">
+  </form>
 {% endif %}
