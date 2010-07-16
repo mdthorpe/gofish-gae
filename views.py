@@ -90,6 +90,8 @@ class GameHandler(webapp.RequestHandler):
       self.deal_cards(game, [human_player])
       self.deal_cards(game, ai_players)
       self.redirect('/game/'+str(game_id)+'/')
+
+    game_events = GameEvent.all().filter('game =', game.key()).order("-time").fetch(25)
  
     path = os.path.join(os.path.dirname(__file__), 'views/play_game.html')
     self.response.out.write(
@@ -100,6 +102,7 @@ class GameHandler(webapp.RequestHandler):
           'game': game,
           'human_player' : human_player,
           'ai_players' : ai_players,
+          'game_events' : game_events,
           })
         )
 
@@ -108,14 +111,17 @@ class GameHandler(webapp.RequestHandler):
       # Do human player turn
       ask_opponent = cgi.escape(self.request.get('ask_opponent'))
       ask_value = cgi.escape(self.request.get('ask_value'))
+
       game = Game.get_by_id(int(game_id))
       human_player = Player.all().filter('game =', game.key()).fetch(1)[0]
       ai_opponent = AiPlayer.get(ask_opponent)
-      logging.debug(human_player.hand)
-      logging.debug(ai_opponent.hand)
-      #player.
+
+      human_player.ask_for_value(ai_opponent,ask_value)
 
       # Do ai players turns
+      for ai_player in AiPlayer.all().filter('game =', game.key()).fetch(10):
+        ai_player.ask_for_value(ai_player.random_opponent(), ai_player.random_card_value())
+
       self.redirect('/game/'+str(game_id)+'/')
       return
     
@@ -126,6 +132,8 @@ class GameHandler(webapp.RequestHandler):
     game.in_progress=True
     game.save()
 
+  def card_value(self, card_number):
+    return (card/4)+1
 
 
 class GameMenu(webapp.RequestHandler):

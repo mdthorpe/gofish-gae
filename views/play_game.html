@@ -39,11 +39,20 @@
       <option>8</option>
       <option>9</option>
       <option>10</option>
-      <option value='11'>J</option>
-      <option value='12'>Q</option>
-      <option value='13'>K</option>
-      <option value='0'>A</option>
+      <option>J</option>
+      <option>Q</option>
+      <option>K</option>
+      <option>A</option>
     </select>'s
     <input type='submit' value="Go">
   </form>
 {% endif %}
+
+<div>
+  <h2>Game Events</h2>
+  <ul>
+  {% for event in game_events %}
+  <li>{{ event.time|date:"Y-M-d h:i:s" }} - {{ event.player.nickname }} - {{ event.description }}</li>
+  {% endfor %}
+  </ul>
+</div>
