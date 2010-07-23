@@ -52,7 +52,10 @@
   <h2>Game Events</h2>
   <ul>
   {% for event in game_events %}
-  <li>{{ event.time|date:"Y-M-d h:i:s" }} - {{ event.player.nickname }} - {{ event.description }}</li>
+  {% if event.player.is_ai_player %}<li class="ai_player_event">
+  {% else %}<li class="human_player_event">{% endif %}
+    {{ event.turn_number }} {{ event.time|date:"Y-M-d h:i:s" }} - {{ event.player.nickname }} - {{ event.description }}
+  </li>
   {% endfor %}
   </ul>
 </div>

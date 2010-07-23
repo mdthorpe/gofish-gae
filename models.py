@@ -31,42 +31,70 @@ class Hand(db.Model):
     if value == "13": return "K"
     return value
 
+  def get_cards_by_value(self, value):
+    card_list = []
+    for card in self.cards:
+      if self.get_card_value(card) == value:
+        card_list.append(card)
+    return card_list
+
+  def remove_cards_by_value(self, value):
+    for card in self.cards:
+      if self.get_card_value(card) == value:
+        self.cards.remove(card)
+    self.save()
+
   def get_card_suit(self, card):
     suits = ["S","H","C","D"]
     index = card%4
     return suits[index] 
 
+  """
+    Returns: A list of card values.
+    This list can be used by AI players to guess with
+  """
+  def get_card_values(self):
+    card_values = []
+    for card in self.cards:
+      card_values.append(self.get_card_value(card))
+    card_values = list(set(card_values))
+    return card_values
+
+  """
+    Returns: int count of all cards of a given value
+  """
+  def count_by_value(self, value):
+    cards = self.get_cards_by_value(value)
+    logging.debug(["count_by_value", value, len(cards)])
+    return len(cards)
+
+
 class Game(db.Model):
   in_progress = db.BooleanProperty()
   deck = db.ReferenceProperty(Hand)
+  turn_number = db.IntegerProperty(default=1)
 
   def log_event(self, player, description):
     game_event = GameEvent()
     game_event.game = self
     game_event.player = player
     game_event.description = description
+    game_event.turn_number = self.turn_number
     game_event.save()
+
+  def new_turn(self):
+    self.turn_number = self.turn_number + 1
+    self.save()
 
 
 class Player(db.Model):
   nickname = db.StringProperty()
   game = db.ReferenceProperty(Game)
   hand = db.ReferenceProperty(Hand)
+  score = db.IntegerProperty(default=0)
 
   def is_ai_player(self):
     return False
-
-  def get_hand_values(self):
-    """
-    Returns:
-      a list of int card values that the player has
-      in their hand.
-    """
-    player_cards = self.hand.get_cards()
-    hand_values = set(player_cards)
-    logging.debug(hand_values)
-    return hand_values
-
 
   def take_cards(self, deck, num_cards):
     deck_cards = deck.get_cards()
@@ -80,9 +108,9 @@ class Player(db.Model):
     self.hand.set_cards(player_hand)
 
   def ask_for_value(self, opponent, value):
-    new_cards = opponent.take_by_value(value)
 
     self.game.log_event(self, "asked for " + opponent.nickname + "'s " + value + "'s")
+    new_cards = opponent.take_by_value(value)
 
     if len(new_cards) > 0:
       current_cards = self.hand.get_cards()
@@ -96,18 +124,27 @@ class Player(db.Model):
       return False
      
   def take_by_value(self, value):
-    current_hand = self.hand.get_cards()
-    new_cards = []
-    for card in current_hand:
-      card_value = self.hand.get_card_value(card)
-      if card_value == value:
-        new_cards.append(card)
-        current_hand.remove(card)
-    self.hand.set_cards(current_hand)
-    self.save()
+    new_cards = self.hand.get_cards_by_value(value)
+    self.hand.remove_cards_by_value(value)
+    if len(new_cards) > 0:
+      self.game.log_event(self, " gave up their " + value + "'s")
     return new_cards
 
+  """
+  Find groups of four cards of the same value.
+  For each group increase score by 1 and remove the four cards
+  """
+  def search_books(self):
+    card_values = self.hand.get_card_values()
+    logging.debug(["card_values",card_values])
+    for val in card_values:
+      if self.hand.count_by_value(val) == 4:
+        self.score_book(val)
 
+  def score_book(self, value):
+    self.hand.remove_cards_by_value(value)
+    self.score = self.score + 1
+    self.save()
 
 class AiPlayer(Player):
   """
@@ -124,22 +161,21 @@ class AiPlayer(Player):
     all_players.append(Player.all().filter('game =', self.game.key()).fetch(1)[0])
 
     for player in AiPlayer.all().filter('game =', self.game.key()).fetch(10):
-      all_players.append(player)
+      if player.nickname != self.nickname:
+       all_players.append(player)
 
     return random.choice(all_players)
-    
 
+  # Return a random card value from a players hand
   def random_card_value(self):
-    value = random.randint(1,13)
-    if value == "1": return "A"
-    if value == "11": return "J"
-    if value == "12": return "Q"
-    if value == "13": return "K"
+    card_values = self.hand.get_card_values()
+    value = random.choice(card_values)
     return str(value)
 
 class GameEvent(db.Model):
   game = db.ReferenceProperty(Game)
   player = db.ReferenceProperty(Player)
   description = db.StringProperty()
+  turn_number = db.IntegerProperty()
   time = db.DateTimeProperty(auto_now=True, auto_now_add=True)
 

@@ -86,6 +86,7 @@ class GameHandler(webapp.RequestHandler):
       self.redirect('/')
       return
 
+    # handle game actions that use GET
     if action == "deal":
       self.deal_cards(game, [human_player])
       self.deal_cards(game, ai_players)
@@ -93,11 +94,11 @@ class GameHandler(webapp.RequestHandler):
 
     game_events = GameEvent.all().filter('game =', game.key()).order("-time").fetch(25)
  
+    # Write out the view
     path = os.path.join(os.path.dirname(__file__), 'views/play_game.html')
     self.response.out.write(
         template.render(path, {
           'game_id': game_id,
-          'nickname': nickname,
           'deck':  game.deck.get_cards(),
           'game': game,
           'human_player' : human_player,
@@ -107,6 +108,8 @@ class GameHandler(webapp.RequestHandler):
         )
 
   def post(self, game_id, action=None):
+
+    # Handle game actions that use POST
     if action == "ask":
       # Do human player turn
       ask_opponent = cgi.escape(self.request.get('ask_opponent'))
@@ -117,10 +120,13 @@ class GameHandler(webapp.RequestHandler):
       ai_opponent = AiPlayer.get(ask_opponent)
 
       human_player.ask_for_value(ai_opponent,ask_value)
+      human_player.search_books()
 
       # Do ai players turns
       for ai_player in AiPlayer.all().filter('game =', game.key()).fetch(10):
+        # Ask a random player for a card of a random value
         ai_player.ask_for_value(ai_player.random_opponent(), ai_player.random_card_value())
+        ai_player.search_books()
 
       self.redirect('/game/'+str(game_id)+'/')
       return
